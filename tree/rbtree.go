@@ -119,8 +119,73 @@ func (t *RBTree[T]) rightRotate(x *rbNode[T]) {
 	x.parent = y
 }
 
-func (t *RBTree[T]) Insert(node *rbNode[T]) *rbNode[T] {
-	return t.impl.Insert(node)
+// Len 返回红黑树的节点数
+func (t *RBTree[T]) Len() int {
+	return t.count
+}
+
+// Insert 往红黑树中插入元素
+func (t *RBTree[T]) Insert(value T) {
+	t.impl.Insert(&rbNode[T]{
+		left:   t.nilNode,
+		right:  t.nilNode,
+		parent: t.nilNode,
+		color:  RED,
+		value:  value,
+	})
+}
+
+// InsertOrGet 如果值不存在则插入，值存在则获取并返回
+func (t *RBTree[T]) InsertOrGet(value T) T {
+	return t.impl.Insert(&rbNode[T]{
+		left:   t.nilNode,
+		right:  t.nilNode,
+		parent: t.nilNode,
+		color:  RED,
+		value:  value,
+	}).value
+}
+
+// Delete 删除红黑树中的元素并返回
+func (t *RBTree[T]) Delete(value T) T {
+	return t.delete(&rbNode[T]{
+		left:   t.nilNode,
+		right:  t.nilNode,
+		parent: t.nilNode,
+		color:  RED,
+		value:  value,
+	}).value
+}
+
+// Search 在红黑树中搜索元素
+func (t *RBTree[T]) Search(value T) *rbNode[T] {
+	return t.impl.Search(&rbNode[T]{
+		left:   t.nilNode,
+		right:  t.nilNode,
+		parent: t.nilNode,
+		color:  RED,
+		value:  value,
+	})
+}
+
+// Min 获取整个红黑树的最小值
+func (t *RBTree[T]) Min() T {
+	var zero T
+	x := t.MinSub(t.root)
+	if x == t.nilNode {
+		return zero
+	}
+	return x.value
+}
+
+// Max 获取整个红黑树的最大值
+func (t *RBTree[T]) Max() T {
+	var zero T
+	x := t.MaxSub(t.root)
+	if x == t.nilNode {
+		return zero
+	}
+	return x.value
 }
 
 func (t *RBTree[T]) insertFixup(node *rbNode[T]) {
@@ -162,8 +227,8 @@ func (t *RBTree[T]) insertFixup(node *rbNode[T]) {
 	t.root.color = BLACK
 }
 
-// Min 返回红黑树中的以指定节点为根节点的子树的最小值
-func (t *RBTree[T]) Min(node *rbNode[T]) *rbNode[T] {
+// MinSub 返回红黑树中的以指定节点为根节点的子树的最小值
+func (t *RBTree[T]) MinSub(node *rbNode[T]) *rbNode[T] {
 	if node == t.nilNode {
 		return t.nilNode
 	}
@@ -173,8 +238,8 @@ func (t *RBTree[T]) Min(node *rbNode[T]) *rbNode[T] {
 	return node
 }
 
-// Max 返回红黑树中的以指定节点为根节点的子树的最大值
-func (t *RBTree[T]) Max(node *rbNode[T]) *rbNode[T] {
+// MaxSub 返回红黑树中的以指定节点为根节点的子树的最大值
+func (t *RBTree[T]) MaxSub(node *rbNode[T]) *rbNode[T] {
 	if node == t.nilNode {
 		return t.nilNode
 	}
@@ -184,9 +249,20 @@ func (t *RBTree[T]) Max(node *rbNode[T]) *rbNode[T] {
 	return node
 }
 
-// Search 搜索红黑树中的指定节点
-func (t *RBTree[T]) Search(node *rbNode[T]) *rbNode[T] {
-	return t.impl.Search(node)
+// Get 获取红黑树中的指定节点的值
+func (t *RBTree[T]) Get(value T) T {
+	ret := t.impl.Search(&rbNode[T]{
+		left:   t.nilNode,
+		right:  t.nilNode,
+		parent: t.nilNode,
+		color:  RED,
+		value:  value,
+	})
+	if ret == nil {
+		var zero T
+		return zero
+	}
+	return ret.value
 }
 
 func (t *RBTree[T]) successor(node *rbNode[T]) *rbNode[T] {
@@ -195,7 +271,7 @@ func (t *RBTree[T]) successor(node *rbNode[T]) *rbNode[T] {
 	}
 
 	if node.right != t.nilNode {
-		return t.Min(node.right)
+		return t.MinSub(node.right)
 	}
 
 	y := node.parent
@@ -206,8 +282,8 @@ func (t *RBTree[T]) successor(node *rbNode[T]) *rbNode[T] {
 	return y
 }
 
-func (t *RBTree[T]) Delete(key *rbNode[T]) *rbNode[T] {
-	z := t.Search(key)
+func (t *RBTree[T]) delete(key *rbNode[T]) *rbNode[T] {
+	z := t.impl.Search(key)
 	if z == t.nilNode {
 		return t.nilNode
 	}
